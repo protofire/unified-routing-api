@@ -2255,7 +2255,8 @@ describe('quote', function () {
       c !== ChainId.SEPOLIA &&
       c !== ChainId.OPTIMISM_GOERLI &&
       c != ChainId.BASE &&
-      c != ChainId.BASE_GOERLI
+      c != ChainId.BASE_GOERLI &&
+      c != ChainId.HARMONY
   )) {
     for (const type of ['EXACT_INPUT', 'EXACT_OUTPUT']) {
       const erc1 = TEST_ERC20_1[chain];

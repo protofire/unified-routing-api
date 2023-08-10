@@ -31,6 +31,7 @@ export const CHAINS_NOT_ALARMED = new Set<ChainId>([
   ChainId.POLYGON_MUMBAI,
   ChainId.SEPOLIA,
   ChainId.BASE_GOERLI,
+  ChainId.HARMONY,
 ]);
 
 const ALL_ALARMED_CHAINS = _.filter(ALL_SUPPORTED_CHAINS, (c) => !CHAINS_NOT_ALARMED.has(c));
