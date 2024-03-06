@@ -19,6 +19,8 @@ export const SUPPORTED_CHAINS = {
     ChainId.AVALANCHE,
     ChainId.BASE_GOERLI,
     ChainId.BASE,
+    ChainId.ZORA,
+    ChainId.ZORA_SEPOLIA,
   ],
   [RoutingType.DUTCH_LIMIT]: [ChainId.MAINNET, ChainId.POLYGON, ChainId.GOERLI],
   [RoutingType.DUTCH_V2]: [ChainId.MAINNET],
