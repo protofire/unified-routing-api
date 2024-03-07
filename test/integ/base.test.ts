@@ -9,7 +9,7 @@ import {
   USDC_MAINNET,
   USDT_MAINNET,
   WBTC_MAINNET,
-  WETH9,
+  // WETH9,
 } from '@uniswap/smart-order-router';
 import { DutchOrder } from '@uniswap/uniswapx-sdk';
 import {
@@ -331,7 +331,7 @@ export class BaseIntegrationTestSuite {
       parseAmount('50000000', USDT_MAINNET),
       parseAmount('100', WBTC_MAINNET),
       parseAmount('10000', UNI_MAINNET),
-      parseAmount('400', WETH9[1]),
+      // parseAmount('400', WETH9[1]),
       parseAmount('5000000', DAI_MAINNET),
       parseAmount('50000', agEUR_MAINNET),
       parseAmount('475000', XSGD_MAINNET),
