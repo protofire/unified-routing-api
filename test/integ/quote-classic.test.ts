@@ -451,6 +451,7 @@ describe('quote', function () {
     [ChainId.ARBITRUM_GOERLI]: null,
     [ChainId.ARBITRUM_SEPOLIA]: null,
     [ChainId.BASE_GOERLI]: USDC_ON(ChainId.BASE_GOERLI),
+    [ChainId.BASE_SEPOLIA]: USDC_ON(ChainId.BASE_SEPOLIA),
     [ChainId.BASE]: USDC_ON(ChainId.BASE),
     [ChainId.ZORA]: USDC_ZORA,
     [ChainId.ZORA_SEPOLIA]: null,
@@ -492,6 +493,7 @@ describe('quote', function () {
     [ChainId.ARBITRUM_GOERLI]: null,
     [ChainId.ARBITRUM_SEPOLIA]: null,
     [ChainId.BASE_GOERLI]: WNATIVE_ON(ChainId.BASE_GOERLI),
+    [ChainId.BASE_SEPOLIA]: WNATIVE_ON(ChainId.BASE_SEPOLIA),
     [ChainId.BASE]: WNATIVE_ON(ChainId.BASE),
     [ChainId.ZORA]: WNATIVE_ON(ChainId.ZORA),
     [ChainId.ZORA_SEPOLIA]: null,
@@ -528,6 +530,7 @@ describe('quote', function () {
       c != ChainId.OPTIMISM_SEPOLIA &&
       c !== ChainId.BASE &&
       c !== ChainId.BASE_GOERLI &&
+      c !== ChainId.BASE_SEPOLIA &&
       // We will follow up supporting ROOTSTOCK
       c !== ChainId.ZORA_SEPOLIA &&
       c !== ChainId.ROOTSTOCK

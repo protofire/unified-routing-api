@@ -272,6 +272,12 @@ export abstract class ChainConfigManager {
       },
       alarmEnabled: false,
     },
+    [ChainId.BASE_SEPOLIA]: {
+      routingTypes: {
+        [RoutingType.CLASSIC]: {},
+      },
+      alarmEnabled: false,
+    },
   };
 
   private static _performedDependencyCheck = false;
