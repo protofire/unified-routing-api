@@ -21,6 +21,7 @@ import {
   USDC_AVAX,
   USDC_BASE,
   USDC_BASE_GOERLI,
+  USDC_BASE_SEPOLIA,
   USDC_BNB,
   USDC_BOB,
   USDC_CYBER,
@@ -215,6 +216,8 @@ export const USDC_ON = (chainId: ChainId): Token => {
       return USDC_BASE_GOERLI;
     case ChainId.BASE:
       return USDC_BASE;
+    case ChainId.BASE_SEPOLIA:
+      return USDC_BASE_SEPOLIA;
     case ChainId.ZKSYNC:
       return USDCE_ZKSYNC;
     case ChainId.ABSTRACT_TESTNET:

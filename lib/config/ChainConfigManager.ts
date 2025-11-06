@@ -158,6 +158,12 @@ export abstract class ChainConfigManager {
       },
       alarmEnabled: false,
     },
+    [ChainId.BASE_SEPOLIA]: {
+      routingTypes: {
+        [RoutingType.CLASSIC]: {},
+      },
+      alarmEnabled: false,
+    },
     [ChainId.BLAST]: {
       routingTypes: {
         [RoutingType.CLASSIC]: {},
