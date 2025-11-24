@@ -9,6 +9,7 @@ import {
   NATIVE_CURRENCY,
   USDB_BLAST,
   USDC_ZORA,
+  USDT_ON,
 } from '@uniswap/smart-order-router';
 import { fail } from 'assert';
 import { AxiosResponse } from 'axios';
@@ -469,6 +470,7 @@ describe('quote', function () {
     [ChainId.ANIME]: USDC_ON(ChainId.ANIME),
     [ChainId.ANIME_TESTNET]: USDC_ON(ChainId.ANIME_TESTNET),
     [ChainId.MODE]: USDC_ON(ChainId.MODE),
+    [ChainId.STABLE_TESTNET]: USDT_ON(ChainId.STABLE_TESTNET),
   };
 
   const TEST_ERC20_2: { [chainId in ChainId]: Token | null } = {
@@ -508,6 +510,7 @@ describe('quote', function () {
     [ChainId.ANIME]: WNATIVE_ON(ChainId.ANIME),
     [ChainId.ANIME_TESTNET]: WNATIVE_ON(ChainId.ANIME_TESTNET),
     [ChainId.MODE]: WNATIVE_ON(ChainId.MODE),
+    [ChainId.STABLE_TESTNET]: null,
   };
 
   // TODO: Find valid pools/tokens on optimistic kovan and polygon mumbai. We skip those tests for now.
