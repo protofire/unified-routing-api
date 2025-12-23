@@ -26,6 +26,7 @@ import {
   USDC_CYBER,
   USDC_FLOW_TESTNET,
   USDF_FLOW_MAINNET,
+  USDC_ZIRCUIT,
   USDC_GOERLI,
   USDC_INK,
   USDC_MAINNET,
@@ -243,6 +244,8 @@ export const USDC_ON = (chainId: ChainId): Token => {
       return USDC_FLOW_TESTNET;
     case ChainId.FLOW_MAINNET:
       return USDF_FLOW_MAINNET;
+    case ChainId.ZIRCUIT:
+      return USDC_ZIRCUIT;
     default:
       throw new Error(`Chain id: ${chainId} not supported`);
   }
