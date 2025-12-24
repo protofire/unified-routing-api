@@ -22,6 +22,7 @@ export type LambdaWidget = {
 export interface DashboardProps extends cdk.NestedStackProps {
   apiName: string;
   quoteLambdaName: string;
+  customerName: string;
 }
 
 export class DashboardStack extends cdk.NestedStack {
@@ -36,7 +37,7 @@ export class DashboardStack extends cdk.NestedStack {
     const REQUESTED_QUOTES_BY_CHAIN_RULE_NAME = 'URARequestedQuotesByChain';
     const RESPONSE_QUOTE_RULE_NAME = 'URAResponseQuotes';
     const RESPONSE_QUOTE_BY_CHAIN_RULE_NAME = 'URAResponseQuotesByChain';
-    new cdk.CfnResource(this, 'URAQuoteContributorInsights', {
+    const URAQuoteContributorInsights = new cdk.CfnResource(this, 'URAQuoteContributorInsights', {
       type: 'AWS::CloudWatch::InsightRule',
       properties: {
         RuleBody: JSON.stringify({
@@ -59,14 +60,16 @@ export class DashboardStack extends cdk.NestedStack {
             Keys: ['$.tokenPairSymbol'],
           },
           LogFormat: 'JSON',
-          LogGroupNames: [`/aws/lambda/${quoteLambdaName}`],
+          LogGroupNames: [`/aws/lambda/${quoteLambdaName}/${props.customerName}`],
         }),
         RuleName: REQUESTED_QUOTES_RULE_NAME,
         RuleState: 'ENABLED',
       },
     });
 
-    new cdk.CfnResource(this, 'URAQuoteByChainContributorInsights', {
+    URAQuoteContributorInsights.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY)
+
+    const URAQuoteByChainContributorInsights = new cdk.CfnResource(this, 'URAQuoteByChainContributorInsights', {
       type: 'AWS::CloudWatch::InsightRule',
       properties: {
         RuleBody: JSON.stringify({
@@ -89,14 +92,16 @@ export class DashboardStack extends cdk.NestedStack {
             Keys: ['$.tokenPairSymbolChain'],
           },
           LogFormat: 'JSON',
-          LogGroupNames: [`/aws/lambda/${quoteLambdaName}`],
+          LogGroupNames: [`/aws/lambda/${quoteLambdaName}/${props.customerName}`],
         }),
         RuleName: REQUESTED_QUOTES_BY_CHAIN_RULE_NAME,
         RuleState: 'ENABLED',
       },
     });
 
-    new cdk.CfnResource(this, 'URAResponseContributorInsights', {
+    URAQuoteByChainContributorInsights.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY)
+
+    const URAResponseContributorInsights = new cdk.CfnResource(this, 'URAResponseContributorInsights', {
       type: 'AWS::CloudWatch::InsightRule',
       properties: {
         RuleBody: JSON.stringify({
@@ -119,14 +124,16 @@ export class DashboardStack extends cdk.NestedStack {
             Keys: ['$.tokenPairSymbolBestQuote'],
           },
           LogFormat: 'JSON',
-          LogGroupNames: [`/aws/lambda/${quoteLambdaName}`],
+          LogGroupNames: [`/aws/lambda/${quoteLambdaName}/${props.customerName}`],
         }),
         RuleName: RESPONSE_QUOTE_RULE_NAME,
         RuleState: 'ENABLED',
       },
     });
 
-    new cdk.CfnResource(this, 'URAResponseByChainContributorInsights', {
+    URAResponseContributorInsights.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY)
+
+    const URAResponseByChainContributorInsights = new cdk.CfnResource(this, 'URAResponseByChainContributorInsights', {
       type: 'AWS::CloudWatch::InsightRule',
       properties: {
         RuleBody: JSON.stringify({
@@ -149,15 +156,17 @@ export class DashboardStack extends cdk.NestedStack {
             Keys: ['$.tokenPairSymbolChainBestQuote'],
           },
           LogFormat: 'JSON',
-          LogGroupNames: [`/aws/lambda/${quoteLambdaName}`],
+          LogGroupNames: [`/aws/lambda/${quoteLambdaName}/${props.customerName}`],
         }),
         RuleName: RESPONSE_QUOTE_BY_CHAIN_RULE_NAME,
         RuleState: 'ENABLED',
       },
     });
 
+    URAResponseByChainContributorInsights.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY)
+
     new aws_cloudwatch.CfnDashboard(this, 'UnifiedRoutingAPIDashboard', {
-      dashboardName: `UnifiedRoutingDashboard`,
+      dashboardName: `${props.customerName}-UnifiedRoutingDashboard`,
       dashboardBody: JSON.stringify({
         periodOverride: 'inherit',
         widgets: [

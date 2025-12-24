@@ -36,6 +36,7 @@ export class APIStage extends Stage {
 
     const { url } = new APIStack(this, `${SERVICE_NAME}API`, {
       env,
+      customerName,
       provisionedConcurrency,
       internalApiKey,
       chatbotSNSArn,
@@ -307,7 +308,10 @@ ChainConfigManager.getChainIdsByRoutingType(RoutingType.CLASSIC).forEach((chainI
   jsonRpcProviders[mapKey] = process.env[mapKey] || '';
 });
 
-new APIStack(app, `${SERVICE_NAME}Stack`, {
+const customerName = app.node.tryGetContext('customerName') ?? 'default';
+
+new APIStack(app, `${SERVICE_NAME}Stack-${customerName}`, {
+  customerName,
   provisionedConcurrency: process.env.PROVISION_CONCURRENCY ? parseInt(process.env.PROVISION_CONCURRENCY) : 0,
   throttlingOverride: process.env.THROTTLE_PER_FIVE_MINS,
   internalApiKey: 'test-api-key',
@@ -319,6 +323,10 @@ new APIStack(app, `${SERVICE_NAME}Stack`, {
   },
 });
 
-new APIPipeline(app, `${SERVICE_NAME}PipelineStack`, {
-  env: { account: '644039819003', region: 'us-east-2' },
-});
+const enablePipelines = app.node.tryGetContext('enablePipelines') === 'true';
+
+if (enablePipelines) {
+  new APIPipeline(app, `${SERVICE_NAME}PipelineStack`, {
+    env: { account: '644039819003', region: 'us-east-2' },
+  });
+}

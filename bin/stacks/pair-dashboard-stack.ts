@@ -6,7 +6,7 @@ import { MetricPair, trackedPairs } from '../../lib/util/metrics-pair';
 import { METRIC_NAMESPACE, METRIC_SERVICE_NAME } from './dashboard-stack';
 
 
-export interface DashboardProps extends cdk.NestedStackProps {}
+export interface DashboardProps extends cdk.NestedStackProps { customerName: string; }
 
 export class XPairDashboardStack extends cdk.NestedStack {
   constructor(scope: Construct, name: string, props: DashboardProps) {
@@ -17,7 +17,7 @@ export class XPairDashboardStack extends cdk.NestedStack {
     let x = 0;
     let y = 0;
     new aws_cloudwatch.CfnDashboard(this, 'UnifiedRoutingAPIXPairsDashboard', {
-      dashboardName: `UnifiedRoutingUniswapXPairsDashboard`,
+      dashboardName: `${props.customerName}-UnifiedRoutingUniswapXPairsDashboard`,
       dashboardBody: JSON.stringify({
         periodOverride: 'inherit',
         widgets: _.flatMap(trackedPairs, (trackedPair: MetricPair) => {

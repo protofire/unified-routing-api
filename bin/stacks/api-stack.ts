@@ -29,6 +29,7 @@ export class APIStack extends cdk.Stack {
     parent: Construct,
     name: string,
     props: cdk.StackProps & {
+      customerName: string;
       provisionedConcurrency: number;
       internalApiKey?: string;
       throttlingOverride?: string;
@@ -43,10 +44,13 @@ export class APIStack extends cdk.Stack {
     /*
      *  API Gateway Initialization
      */
-    const accessLogGroup = new aws_logs.LogGroup(this, `${SERVICE_NAME}APIGAccessLogs`);
+    const accessLogGroup = new aws_logs.LogGroup(this, `${SERVICE_NAME}APIGAccessLogs`, {
+      logGroupName: `/aws/apigateway/UnifiedRoutingAPI/${props.customerName}`,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
 
     const api = new aws_apigateway.RestApi(this, `${SERVICE_NAME}`, {
-      restApiName: `${SERVICE_NAME}`,
+      restApiName: `${props.customerName} - ${SERVICE_NAME}`,
       deployOptions: {
         tracingEnabled: true,
         loggingLevel: MethodLoggingLevel.ERROR,
@@ -91,7 +95,7 @@ export class APIStack extends cdk.Stack {
           content: '{"errorCode": "TOO_MANY_REQUESTS"}',
         },
       },
-      name: `${SERVICE_NAME}IPThrottling`,
+      name: `${SERVICE_NAME}IPThrottling-${props.customerName}`,
       rules: [
         {
           name: 'IPAllowRule',
@@ -256,13 +260,20 @@ export class APIStack extends cdk.Stack {
     });
 
     /* Dashboard */
-    new DashboardStack(this, 'DashboardStack', {
-      apiName: api.restApiName,
-      quoteLambdaName: quoteLambda.functionName,
-    });
+    const enableCWDashboards = this.node.tryGetContext('enableCWDashboards') === 'true';
+
+    if (enableCWDashboards) {
+      new DashboardStack(this, 'DashboardStack', {
+        apiName: api.restApiName,
+        quoteLambdaName: quoteLambda.functionName,
+        customerName: props.customerName,
+      });
+    }
 
     /* Pair tracking dashboard for X */
-    new XPairDashboardStack(this, 'XPairDashboardStack', {});
+    if (enableCWDashboards) {
+      new XPairDashboardStack(this, 'XPairDashboardStack', { customerName: props.customerName, });
+    }
 
     /* Quote Endpoint */
     const quoteLambdaIntegration = new aws_apigateway.LambdaIntegration(quoteLambdaAlias, {});
@@ -276,7 +287,7 @@ export class APIStack extends cdk.Stack {
 
     /* Alarms */
     const apiAlarm5xxSev2 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV2-5XXAlarm', {
-      alarmName: 'UnifiedRoutingAPI-SEV2-5XX',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV2-5XX`,
       metric: api.metricServerError({
         period: Duration.minutes(5),
         // For this metric 'avg' represents error rate.
@@ -288,7 +299,7 @@ export class APIStack extends cdk.Stack {
     });
 
     const apiAlarm5xxSev3 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV3-5XXAlarm', {
-      alarmName: 'UnifiedRoutingAPI-SEV3-5XX',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV3-5XX`,
       metric: api.metricServerError({
         period: Duration.minutes(5),
         // For this metric 'avg' represents error rate.
@@ -300,7 +311,7 @@ export class APIStack extends cdk.Stack {
     });
 
     const apiAlarm4xxSev2 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV2-4XXAlarm', {
-      alarmName: 'UnifiedRoutingAPI-SEV2-4XX',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV2-4XX`,
       metric: api.metricClientError({
         period: Duration.minutes(5),
         statistic: 'avg',
@@ -310,7 +321,7 @@ export class APIStack extends cdk.Stack {
     });
 
     const apiAlarm4xxSev3 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV3-4XXAlarm', {
-      alarmName: 'UnifiedRoutingAPI-SEV3-4XX',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV3-4XX`,
       metric: api.metricClientError({
         period: Duration.minutes(5),
         statistic: 'avg',
@@ -320,7 +331,7 @@ export class APIStack extends cdk.Stack {
     });
 
     const apiAlarmLatencySev2 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV2-Latency', {
-      alarmName: 'UnifiedRoutingAPI-SEV2-Latency',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV2-Latency`,
       metric: api.metricLatency({
         period: Duration.minutes(LATENCY_ALARM_DEFAULT_PERIOD_MIN),
         statistic: 'p90',
@@ -330,7 +341,7 @@ export class APIStack extends cdk.Stack {
     });
 
     const apiAlarmLatencySev3 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV3-Latency', {
-      alarmName: 'UnifiedRoutingAPI-SEV3-Latency',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV3-Latency`,
       metric: api.metricLatency({
         period: Duration.minutes(LATENCY_ALARM_DEFAULT_PERIOD_MIN),
         statistic: 'p90',
@@ -340,7 +351,7 @@ export class APIStack extends cdk.Stack {
     });
 
     const apiAlarmLatencyP99Sev2 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV2-LatencyP99', {
-      alarmName: 'UnifiedRoutingAPI-SEV2-LatencyP99',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV2-LatencyP99`,
       metric: api.metricLatency({
         period: Duration.minutes(LATENCY_ALARM_DEFAULT_PERIOD_MIN),
         statistic: 'p99',
@@ -352,7 +363,7 @@ export class APIStack extends cdk.Stack {
     // Alarm if URA latency is high (> SEV2_P99LATENCY_MS) and Routing API is not (< ROUTING_API_MAX_LATENCY_MS)
     // Usually there's nothing to be done in URA when RoutingAPI latency is high
     const apiAlarmLatencyP99WithDepsSev2 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV2-LatencyP99WithDeps', {
-      alarmName: 'UnifiedRoutingAPI-SEV2-LatencyP99WithDeps',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV2-LatencyP99WithDeps`,
       actionsEnabled: true,
       evaluationPeriods: 3,
       datapointsToAlarm: 3,
@@ -396,7 +407,7 @@ export class APIStack extends cdk.Stack {
     });
 
     const apiAlarmLatencyP99Sev3 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV3-LatencyP99', {
-      alarmName: 'UnifiedRoutingAPI-SEV3-LatencyP99',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV3-LatencyP99`,
       metric: api.metricLatency({
         period: Duration.minutes(LATENCY_ALARM_DEFAULT_PERIOD_MIN),
         statistic: 'p99',
@@ -408,7 +419,7 @@ export class APIStack extends cdk.Stack {
     // Alarm if URA latency is high (> SEV3_P99LATENCY_MS) and Routing API is not (< ROUTING_API_MAX_LATENCY_MS)
     // Usually there's nothing to be done in URA when RoutingAPI latency is high
     const apiAlarmLatencyP99WithDepsSev3 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV3-LatencyP99WithDeps', {
-      alarmName: 'UnifiedRoutingAPI-SEV3-LatencyP99WithDeps',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV3-LatencyP99WithDeps`,
       actionsEnabled: true,
       evaluationPeriods: 3,
       datapointsToAlarm: 3,
@@ -453,8 +464,8 @@ export class APIStack extends cdk.Stack {
 
     // Alarms for 200 rate being too low for each chain
     const percent5XXByChainAlarm: cdk.aws_cloudwatch.Alarm[] = _.flatMap(ALL_ALARMED_CHAINS, (chainId) => {
-      const alarmNameSev3 = `UnifiedRoutingAPI-SEV3-5XXAlarm-ChainId-${chainId.toString()}`;
-      const alarmNameSev2 = `UnifiedRoutingAPI-SEV2-5XXAlarm-ChainId-${chainId.toString()}`;
+      const alarmNameSev3 = `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV3-5XXAlarm-ChainId-${chainId.toString()}`;
+      const alarmNameSev2 = `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV2-5XXAlarm-ChainId-${chainId.toString()}`;
 
       const metric = new aws_cloudwatch.MathExpression({
         expression: '100*(response5XX/invocations)',
@@ -495,8 +506,8 @@ export class APIStack extends cdk.Stack {
 
     // Alarms for 4XX rate being too high for each chain
     const percent4XXByChainAlarm: cdk.aws_cloudwatch.Alarm[] = _.flatMap(ALL_ALARMED_CHAINS, (chainId) => {
-      const alarmNameSev3 = `UnifiedRoutingAPI-SEV3-4XXAlarm-ChainId-${chainId.toString()}`;
-      const alarmNameSev2 = `UnifiedRoutingAPI-SEV2-4XXAlarm-ChainId-${chainId.toString()}`;
+      const alarmNameSev3 = `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV3-4XXAlarm-ChainId-${chainId.toString()}`;
+      const alarmNameSev2 = `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV2-4XXAlarm-ChainId-${chainId.toString()}`;
 
       const metric = new aws_cloudwatch.MathExpression({
         expression: '100*(response4XX/invocations)',
@@ -558,14 +569,14 @@ export class APIStack extends cdk.Stack {
     });
 
     const routingAPIErrorRateAlarmSev2 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV2-RoutingAPI-ErrorRate', {
-      alarmName: 'UnifiedRoutingAPI-SEV2-RoutingAPI-ErrorRate',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV2-RoutingAPI-ErrorRate`,
       metric: routingAPIErrorMetric,
       threshold: 10,
       evaluationPeriods: 3,
     });
 
     const routingAPIErrorRateAlarmSev3 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV3-RoutingAPI-ErrorRate', {
-      alarmName: 'UnifiedRoutingAPI-SEV3-RoutingAPI-ErrorRate',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV3-RoutingAPI-ErrorRate`,
       metric: routingAPIErrorMetric,
       threshold: 5,
       evaluationPeriods: 3,
@@ -594,14 +605,14 @@ export class APIStack extends cdk.Stack {
     });
 
     const rfqAPIErrorRateAlarmSev2 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV2-RFQAPI-ErrorRate', {
-      alarmName: 'UnifiedRoutingAPI-SEV2-RFQAPI-ErrorRate',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV2-RFQAPI-ErrorRate`,
       metric: rfqAPIErrorMetric,
       threshold: 10,
       evaluationPeriods: 3,
     });
 
     const rfqAPIErrorRateAlarmSev3 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV3-RFQAPI-ErrorRate', {
-      alarmName: 'UnifiedRoutingAPI-SEV3-RFQAPI-ErrorRate',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV3-RFQAPI-ErrorRate`,
       metric: rfqAPIErrorMetric,
       threshold: 5,
       evaluationPeriods: 3,
@@ -630,14 +641,14 @@ export class APIStack extends cdk.Stack {
     });
 
     const rfqQuoteDropRateAlarmSev2 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV2-RfqQuote-DropRate', {
-      alarmName: 'UnifiedRoutingAPI-SEV2-RfqQuote-DropRate',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV2-RfqQuote-DropRate`,
       metric: rfqQuoteDropMetric,
       threshold: 15,
       evaluationPeriods: 3,
     });
 
     const rfqQuoteDropRateAlarmSev3 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV3-RfqQuote-DropRate', {
-      alarmName: 'UnifiedRoutingAPI-SEV3-RfqQuote-DropRate',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV3-RfqQuote-DropRate`,
       metric: rfqQuoteDropMetric,
       threshold: 5,
       evaluationPeriods: 3,
@@ -666,14 +677,14 @@ export class APIStack extends cdk.Stack {
     });
 
     const nonceAPIErrorRateAlarmSev2 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV2-NonceAPI-ErrorRate', {
-      alarmName: 'UnifiedRoutingAPI-SEV2-NonceAPI-ErrorRate',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV2-NonceAPI-ErrorRate`,
       metric: nonceAPIErrorMetric,
       threshold: 10,
       evaluationPeriods: 3,
     });
 
     const nonceAPIErrorRateAlarmSev3 = new aws_cloudwatch.Alarm(this, 'UnifiedRoutingAPI-SEV3-NonceAPI-ErrorRate', {
-      alarmName: 'UnifiedRoutingAPI-SEV3-NonceAPI-ErrorRate',
+      alarmName: `UnifiedRoutingAPIStack-${props.customerName}-UnifiedRoutingAPI-SEV3-NonceAPI-ErrorRate`,
       metric: nonceAPIErrorMetric,
       threshold: 5,
       evaluationPeriods: 3,
