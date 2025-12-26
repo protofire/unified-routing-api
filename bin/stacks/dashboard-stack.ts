@@ -33,10 +33,10 @@ export class DashboardStack extends cdk.NestedStack {
     const region = cdk.Stack.of(this).region;
 
     // No CDK resource exists for contributor insights at the moment so use raw CloudFormation.
-    const REQUESTED_QUOTES_RULE_NAME = 'URARequestedQuotes';
-    const REQUESTED_QUOTES_BY_CHAIN_RULE_NAME = 'URARequestedQuotesByChain';
-    const RESPONSE_QUOTE_RULE_NAME = 'URAResponseQuotes';
-    const RESPONSE_QUOTE_BY_CHAIN_RULE_NAME = 'URAResponseQuotesByChain';
+    const REQUESTED_QUOTES_RULE_NAME = `URARequestedQuotes-${props.customerName}`;
+    const REQUESTED_QUOTES_BY_CHAIN_RULE_NAME = `URARequestedQuotesByChain-${props.customerName}`;
+    const RESPONSE_QUOTE_RULE_NAME = `URAResponseQuotes${props.customerName}`;
+    const RESPONSE_QUOTE_BY_CHAIN_RULE_NAME = `URAResponseQuotesByChain${props.customerName}`;
     const URAQuoteContributorInsights = new cdk.CfnResource(this, 'URAQuoteContributorInsights', {
       type: 'AWS::CloudWatch::InsightRule',
       properties: {
